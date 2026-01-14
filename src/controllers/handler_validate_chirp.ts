@@ -1,26 +1,20 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import BadRequestError from "../errors/bad_request.js";
 
 type chirpBody = {
     body: string;
-};
-type chirpError = {
-    error: string;
 };
 type chirpCleaned = {
     cleanedBody: string;
 };
 
-export async function handlerValidateChirp(req: Request, res: Response) {
+export async function handlerValidateChirp(req: Request, res: Response, next: NextFunction) {
     
     try {
         const chirp: chirpBody = req.body;
 
         if (chirp.body.length > 140){
-            const chirpError: chirpError = {
-                error: "Chirp is too long"
-            } 
-            res.status(400).send(JSON.stringify(chirpError));
-            return;
+            throw new BadRequestError("Chirp is too long. Max length is 140");
         }
 
         const chirpCleaned: chirpCleaned = {
@@ -29,10 +23,7 @@ export async function handlerValidateChirp(req: Request, res: Response) {
         res.status(200).send(JSON.stringify(chirpCleaned));
 
     } catch (ex: unknown) {
-        const chirpError: chirpError = {
-            error: "Something went wrong"
-        } 
-        res.status(400).send(JSON.stringify(chirpError));
+        next(ex);
     }
 }
 

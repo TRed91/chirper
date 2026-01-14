@@ -4,6 +4,7 @@ import { middlewareLogResponses } from "./middleware/middleware_log_responses.js
 import { middlewareMetricsInc } from "./middleware/middleware_metrics_inc.js";
 import { handlerMetrics, handlerReset } from "./controllers/handler_metrics.js";
 import { handlerValidateChirp } from "./controllers/handler_validate_chirp.js";
+import { middlewareErrorHandler } from "./middleware/middleware_error_handler.js";
 
 const app = express();
 const PORT = 8080;
@@ -20,6 +21,8 @@ app.post("/api/validate_chirp", handlerValidateChirp);
 
 app.get("/admin/metrics", handlerMetrics);
 app.post("/admin/reset", handlerReset);
+
+app.use(middlewareErrorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`)
