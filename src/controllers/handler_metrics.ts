@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { config } from "../config.js";
+import { deleteUsers } from "../lib/db/queries/users_queries.js";
 
 export async function handlerMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try{
@@ -8,7 +9,7 @@ export async function handlerMetrics(req: Request, res: Response, next: NextFunc
       res.send(`<html>
         <body>
           <h1>Welcome, Chirpy Admin</h1>
-          <p>Chirpy has been visited ${config.fileserverHits} times!</p>
+          <p>Chirpy has been visited ${config.apiConfig.fileServerHits} times!</p>
         </body>
       </html>`);
 
@@ -21,7 +22,15 @@ export async function handlerMetrics(req: Request, res: Response, next: NextFunc
 export async function handlerReset(req: Request, res: Response, next: NextFunction): Promise<void> {
     try{
 
-      config.fileserverHits = 0;
+      if (config.apiConfig.platform !== 'dev'){
+        res.status(403);
+        return;
+      }
+
+      config.apiConfig.fileServerHits = 0;
+
+      await deleteUsers();
+
       res.set("Content-Type", "text/plain; charset=utf-8");
       res.send("Hits Reset");
 
