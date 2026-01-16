@@ -8,7 +8,7 @@ import { middlewareLogResponses } from "./middleware/middleware_log_responses.js
 import { middlewareMetricsInc } from "./middleware/middleware_metrics_inc.js";
 import { handlerMetrics, handlerReset } from "./controllers/handler_metrics.js";
 import { middlewareErrorHandler } from "./middleware/middleware_error_handler.js";
-import { handlerCreateUser } from "./controllers/handler_create_user.js";
+import { handlerCreateUser, handlerLoginUser } from "./controllers/handler_user_auth.js";
 import { handlerCreateChirp } from "./controllers/handler_create_chirp.js";
 import { handlerGetChirp, handlerGetChirps } from "./controllers/handler_get_chirps.js";
 
@@ -27,6 +27,7 @@ app.use(middlewareLogResponses);
 
 app.get("/api/healthz", handlerReadiness);
 app.post("/api/users", handlerCreateUser);
+app.post("/api/login", handlerLoginUser);
 app.post("/api/chirps", handlerCreateChirp);
 app.get("/api/chirps", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirp);
