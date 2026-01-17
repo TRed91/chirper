@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import BadRequestError from "../errors/bad_request.js"
 import { createChirp } from "../lib/db/queries/chirps_queries.js";
+import { getBearerToken, validateJWT } from "../auth.js";
+import { config } from "../config.js";
 
 type ChirpBody = {
     body: string,
@@ -12,6 +14,9 @@ const MAX_CHAR_LENGTH = 140;
 export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
     try {
 
+        const token = getBearerToken(req);
+        const userId = validateJWT(token, config.apiConfig.secret);
+
         const payload: ChirpBody = req.body;
 
         if (payload.body.length > MAX_CHAR_LENGTH){
@@ -22,7 +27,7 @@ export async function handlerCreateChirp(req: Request, res: Response, next: Next
 
         const result = await createChirp({ 
             body: sanitizedChirp, 
-            userId: payload.userId 
+            userId: userId 
         });
 
         res.status(201).json(result);

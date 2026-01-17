@@ -22,7 +22,23 @@ export const chirps = pgTable("chirps", {
         .$onUpdate(() => new Date()),
     body: varchar("body", {length: 140}).notNull(),
     userId: uuid("user_id").notNull().references(() => users.id, {onDelete: "cascade"})
-})
+});
+
+export const refreshTokens = pgTable("refresh_tokens", {
+    token: varchar("token").primaryKey().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .defaultNow()
+        .$onUpdate(() => new Date()),
+    userId: uuid("user_id").notNull().references(() => users.id, {onDelete: "cascade"}),
+    expiresAt: timestamp("expires_at").notNull(),
+    revokedAt: timestamp("revoked_at")
+});
 
 export type NewUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 export type NewChirp = typeof chirps.$inferInsert;
+export type Chirp = typeof chirps.$inferSelect;
+export type NewRefreshToken = typeof refreshTokens.$inferInsert;
+export type RefreshToken = typeof refreshTokens.$inferSelect;

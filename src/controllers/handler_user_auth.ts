@@ -1,18 +1,25 @@
 import { NextFunction, Request, Response } from "express";
 import { createUser, getUserByEmail } from "../lib/db/queries/users_queries.js";
-import { checkPasswordHash, hashPassword } from "../auth.js";
-import { NewUser } from "../lib/db/schema.js";
+import { checkPasswordHash, getBearerToken, hashPassword, makeJWT, makeRefreshToken } from "../auth.js";
+import { NewRefreshToken, RefreshToken, User } from "../lib/db/schema.js";
+import { config } from "../config.js";
+import { createRefreshToken, getRefreshToken, revokeRefreshToken } from "../lib/db/queries/refresh_token_queries.js";
 
 type CreateUser = {
     email: string,
     hashedPassword: string,
 }
 
-type UserResponse = Omit<NewUser, "hashedPassword">;
+type LoginRequestBody = {
+    password: string,
+    email: string,
+}
+
+type UserResponse = Omit<User, "hashedPassword">;
 
 export async function handlerCreateUser(req: Request, res: Response, next: NextFunction) {
     try {
-        const validationErrors = validBody(req);
+        const validationErrors = validateBody(req);
 
         if (validationErrors.length > 0){
             res.status(400).json({errors: validationErrors});
@@ -42,35 +49,93 @@ export async function handlerCreateUser(req: Request, res: Response, next: NextF
 
 export async function handlerLoginUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const validationErrors = validBody(req);
+        const validationErrors = validateBody(req);
 
         if (validationErrors.length > 0){
             res.status(400).json(validationErrors);
             return;
         }
 
-        const user = await getUserByEmail(req.body.email);
+        const requestBody : LoginRequestBody = req.body;
 
-        if (user && user.hashedPassword){
-            const result = await checkPasswordHash(req.body.password, user.hashedPassword);
-            if (result){
-                const userResponse: UserResponse = {
-                    id: user.id,
-                    email: user.email,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt,
-                };
-                res.status(200).json(userResponse);
-                return;
-            }
+        const user = await getUserByEmail(requestBody.email);
+        if (!user){
+            res.status(401).json({error: "Incorrect email"});
         }
-        res.status(401).json({error: "Incorrect email or password"});
+
+        const result = await checkPasswordHash(requestBody.password, user.hashedPassword);
+        if (!result){
+            res.status(401).json({error: "Incorrect password"});
+        }
+
+        const accessToken = makeJWT(user.id, config.apiConfig.secret)
+
+        const expDate = new Date()
+        expDate.setDate(expDate.getDate() + 60);
+        const newRefreshToken: NewRefreshToken = {
+            token: makeRefreshToken(),
+            userId: user.id,
+            expiresAt: expDate
+        };
+
+        const refreshToken = await createRefreshToken(newRefreshToken);
+
+        const userResponse: UserResponse | { token: string, refreshToken: string } = {
+            id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            token: accessToken,
+            refreshToken: refreshToken.token,
+        };
+        res.status(200).json(userResponse);
+               
     } catch (ex: unknown) {
         next(ex);
     }
 }
 
-function validBody(req: Request): string[] {
+export async function handlerRefresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+
+        const bearerToken = getBearerToken(req);
+        const refreshToken = await getRefreshToken(bearerToken);
+        
+        if (!tokenIsValid(refreshToken)){
+            res.status(401).json({ error: "Invalid token" });
+            return;
+        }
+
+        const newAccessToken = makeJWT(refreshToken.userId, config.apiConfig.secret);
+
+        res.status(200).json({ token: newAccessToken });
+
+    } catch (ex: unknown) {
+        next(ex);
+    }
+}
+
+export async function handlerRevoke(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+
+        const bearerToken = getBearerToken(req);
+        
+        const refreshToken = await getRefreshToken(bearerToken);
+
+        if (!refreshToken){
+            res.status(401);
+        }
+        
+        await revokeRefreshToken(refreshToken.token);
+
+        res.status(204).send();
+
+    } catch (ex: unknown) {
+        next(ex);
+    }
+}
+
+function validateBody(req: Request): string[] {
     const errors: string[] = [];
     if ("email" in req.body){
         if (!req.body.email){
@@ -87,4 +152,10 @@ function validBody(req: Request): string[] {
         errors.push("Password missing.");
     }
     return errors;
+}
+
+function tokenIsValid(refreshToken : RefreshToken): boolean {
+    return refreshToken && 
+        !refreshToken.revokedAt && 
+        refreshToken.expiresAt > new Date();
 }
