@@ -49,10 +49,18 @@ export function validateJWT(tokenString: string, secret: string): string {
 export function getBearerToken(req: Request): string {
     const token = req.get("Authorization");
     if (!token) {
-        throw new UnauthorizedError("JWT invalid or expired")
+        throw new UnauthorizedError("Missing or invalid JWT token")
     }
     return token.substring(7);
 } 
+
+export function getAPIKey(req: Request): string {
+    const token = req.get("Authorization");
+    if (!token) {
+        throw new UnauthorizedError("Missing Api key")
+    }
+    return token.substring(7);
+}
 
 export function makeRefreshToken(): string {
     const bytes = crypto.randomBytes(32).toString("hex");

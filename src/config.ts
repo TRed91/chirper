@@ -16,7 +16,8 @@ export const config = {
     apiConfig: {
         fileServerHits: 0,
         platform: envOrThrow(process.env.PLATFORM),
-        secret: envOrThrow(process.env.SECRET)
+        secret: envOrThrow(process.env.SECRET),
+        polkaKey: envOrThrow(process.env.POLKA_KEY),
     },
     dbConfig: {
         dbUrl: envOrThrow(process.env.DB_URL),

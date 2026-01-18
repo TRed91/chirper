@@ -12,6 +12,7 @@ import { handlerCreateUser, handlerLoginUser, handlerRefresh, handlerRevoke, han
 import { handlerCreateChirp } from "./controllers/handler_create_chirp.js";
 import { handlerDeleteChirp } from "./controllers/handler_delete_chirp.js";
 import { handlerGetChirp, handlerGetChirps } from "./controllers/handler_get_chirps.js";
+import { handlerUpgradeChirpyRed } from "./controllers/handler_upgrade_chirpy_red.js";
 
 const migrationsClient = postgres(config.dbConfig.dbUrl, { max: 1 });
 await migrate(drizzle(migrationsClient), config.dbConfig.migrationConfig);
@@ -40,6 +41,8 @@ app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
 
 app.post("/api/refresh", handlerRefresh);
 app.post("/api/revoke", handlerRevoke);
+
+app.post("/api/polka/webhooks", handlerUpgradeChirpyRed)
 
 app.get("/admin/metrics", handlerMetrics);
 app.post("/admin/reset", handlerReset);

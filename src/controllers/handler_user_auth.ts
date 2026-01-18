@@ -44,6 +44,7 @@ export async function handlerCreateUser(req: Request, res: Response, next: NextF
             email: result.email,
             createdAt: result.createdAt,
             updatedAt: result.updatedAt,
+            isChirpyRed: result.isChirpyRed
         }
         res.status(201).json(response);
 
@@ -89,6 +90,7 @@ export async function handlerLoginUser(req: Request, res: Response, next: NextFu
             email: user.email,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
+            isChirpyRed: user.isChirpyRed,
             token: accessToken,
             refreshToken: refreshToken.token,
         };
@@ -159,12 +161,15 @@ export async function handlerUpdateUser(req: Request, res: Response, next: NextF
 
         const result = await updateUser(userUpdate);
 
-        res.status(200).json({
+        const response: UserResponse = {
             id: result.id,
             email: result.email,
             createdAt: result.createdAt,
             updatedAt: result.updatedAt,
-        });
+            isChirpyRed: result.isChirpyRed,
+        }
+
+        res.status(200).json(response);
 
     } catch (ex: unknown) {
         next(ex);

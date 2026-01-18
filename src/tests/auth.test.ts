@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { checkPasswordHash, getBearerToken, hashPassword, makeJWT, validateJWT } from "../auth";
+import { checkPasswordHash, getAPIKey, getBearerToken, hashPassword, makeJWT, validateJWT } from "../auth";
 
 describe("Password Hashing", () => {
     const password1 = "correctPassword123!";
@@ -69,5 +69,31 @@ describe("Extracting bearer token", () => {
     it("should throw if Authentication header is missing", () => {
         expect(() => getBearerToken(mockRequestInvalid))
             .toThrow("Missing or invalid JWT token");
+    })
+})
+
+describe("Extracting API key", () => {
+    const mockRequest: any = {
+        get: (name:string): string | undefined => { 
+            return name === "Authorization" 
+                ? "ApiKey 123.456" 
+                : undefined
+            }
+    };
+
+    const mockRequestInvalid: any = {
+        get: (name:string): string | undefined => { 
+            return undefined
+        }
+    };
+
+    it("should return only the api key", () => {
+         const result = getAPIKey(mockRequest);
+         expect(result).toBe("123.456");
+    });
+
+    it("should throw if Authentication header is missing", () => {
+        expect(() => getAPIKey(mockRequestInvalid))
+            .toThrow("Missing Api key");
     })
 })
