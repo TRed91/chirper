@@ -8,8 +8,9 @@ import { middlewareLogResponses } from "./middleware/middleware_log_responses.js
 import { middlewareMetricsInc } from "./middleware/middleware_metrics_inc.js";
 import { handlerMetrics, handlerReset } from "./controllers/handler_metrics.js";
 import { middlewareErrorHandler } from "./middleware/middleware_error_handler.js";
-import { handlerCreateUser, handlerLoginUser, handlerRefresh, handlerRevoke } from "./controllers/handler_user_auth.js";
+import { handlerCreateUser, handlerLoginUser, handlerRefresh, handlerRevoke, handlerUpdateUser } from "./controllers/handler_user_auth.js";
 import { handlerCreateChirp } from "./controllers/handler_create_chirp.js";
+import { handlerDeleteChirp } from "./controllers/handler_delete_chirp.js";
 import { handlerGetChirp, handlerGetChirps } from "./controllers/handler_get_chirps.js";
 
 const migrationsClient = postgres(config.dbConfig.dbUrl, { max: 1 });
@@ -26,11 +27,17 @@ app.use("/app", express.static("./src/app"));
 app.use(middlewareLogResponses);
 
 app.get("/api/healthz", handlerReadiness);
+
 app.post("/api/users", handlerCreateUser);
+app.put("/api/users", handlerUpdateUser);
+
 app.post("/api/login", handlerLoginUser);
+
 app.post("/api/chirps", handlerCreateChirp);
 app.get("/api/chirps", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirp);
+app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
+
 app.post("/api/refresh", handlerRefresh);
 app.post("/api/revoke", handlerRevoke);
 
