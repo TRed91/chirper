@@ -35,7 +35,7 @@ app.put("/api/users", handlerUpdateUser);
 app.post("/api/login", handlerLoginUser);
 
 app.post("/api/chirps", handlerCreateChirp);
-app.get("/api/chirps", handlerGetChirps);
+app.get("/api/chirps{/:authorId}{/:sort}", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirp);
 app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
 
